@@ -680,6 +680,10 @@ target_link_libraries(app-lib
   fmt
   tinyexpr)
 
+if(ENABLE_DRM)
+  target_link_libraries(app-lib drm-lib)
+endif()
+
 # Directory where generated files by "gen" utility will stay.
 target_include_directories(app-lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
