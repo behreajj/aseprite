@@ -104,25 +104,44 @@ Palette* load_gpl_file(const char* filename)
 bool save_gpl_file(const Palette* pal, const char* filename)
 {
   std::ofstream f(FSTREAM_PATH(filename));
-  if (f.bad()) return false;
-
-  const bool hasAlpha = pal->hasAlpha();
-
-  f << "GIMP Palette\n";
-  if (hasAlpha)
-    f << "Channels: RGBA\n";
-  f << "#\n";
-
-  for (int i=0; i<pal->size(); ++i) {
-    uint32_t col = pal->getEntry(i);
-    f << std::setfill(' ') << std::setw(3) << ((int)rgba_getr(col)) << " "
-      << std::setfill(' ') << std::setw(3) << ((int)rgba_getg(col)) << " "
-      << std::setfill(' ') << std::setw(3) << ((int)rgba_getb(col));
-    if (hasAlpha)
-      f << " " << std::setfill(' ') << std::setw(3) << ((int)rgba_geta(col));
-    f << "\tUntitled\n";        // TODO add support for color name entries
+  if (f.bad()) {
+    return false;
   }
-
+  
+  const bool hasAlpha = pal->hasAlpha();
+  
+  f << "GIMP Palette\n";
+  if (hasAlpha) {
+    f << "Channels: RGBA\n";
+  }
+  f << "#\n";
+  
+  const int palSize = pal->size();
+  for (int i=0; i<palSize; ++i) {
+    const uint32_t col = pal->getEntry(i);
+    const uint8_t r = rgba_getr(col);
+    const uint8_t g = rgba_getg(col);
+    const uint8_t b = rgba_getb(col);
+    
+    f << std::dec
+      << std::setfill(' ') << std::setw(3) << (int)r << " "
+      << std::setfill(' ') << std::setw(3) << (int)g << " "
+      << std::setfill(' ') << std::setw(3) << (int)b;
+    
+    if (hasAlpha) {
+      const uint8_t a = rgba_geta(col);
+      f << " " << std::setfill(' ') << std::setw(3) << (int)a;
+    }
+    
+    // TODO add support for color name entries
+    // Until the above task is completed, a better
+    // placeholder than "Untitled" would be web hex.
+    const int webOrderHex = (r << 0x10) | (g << 0x08) | b;
+    f << " " << std::hex << std::uppercase
+      << std::setfill('0') << std::setw(6)
+      << webOrderHex << "\n";
+  }
+  
   return true;
 }
 
