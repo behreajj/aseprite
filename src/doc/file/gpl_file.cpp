@@ -24,126 +24,139 @@
 #include <string>
 
 namespace doc {
-namespace file {
+  namespace file {
 
-Palette* load_gpl_file(const char* filename)
-{
-  std::ifstream f(FSTREAM_PATH(filename));
-  if (f.bad()) return NULL;
+    Palette* load_gpl_file(const char* filename)
+    {
+      std::ifstream f(FSTREAM_PATH(filename));
+      if (f.bad()) return NULL;
 
-  // Read first line, it must be "GIMP Palette"
-  std::string line;
-  if (!std::getline(f, line)) return NULL;
-  base::trim_string(line, line);
-  if (line != "GIMP Palette") return NULL;
-
-  std::unique_ptr<Palette> pal(new Palette(frame_t(0), 0));
-  std::string comment;
-  bool hasAlpha = false;
-
-  while (std::getline(f, line)) {
-    // Trim line.
-    base::trim_string(line, line);
-
-    // Remove empty lines
-    if (line.empty())
-      continue;
-
-    // Concatenate comments
-    if (line[0] == '#') {
-      line = line.substr(1);
+      // Read first line, it must be "GIMP Palette"
+      std::string line;
+      if (!std::getline(f, line)) return NULL;
       base::trim_string(line, line);
-      comment += line;
-      comment.push_back('\n');
-      continue;
-    }
+      if (line != "GIMP Palette") return NULL;
 
-    // Remove properties (TODO add these properties in the palette)
-    if (!std::isdigit(line[0])) {
-      std::vector<std::string> parts;
-      base::split_string(line, parts, ":");
-      // Aseprite extension for palettes with alpha channel.
-      if (parts.size() == 2 &&
-          parts[0] == "Channels") {
-        base::trim_string(parts[1], parts[1]);
-        if (parts[1] == "RGBA")
-          hasAlpha = true;
+      std::unique_ptr<Palette> pal(new Palette(frame_t(0), 0));
+      std::string comment;
+      bool hasAlpha = false;
+
+      while (std::getline(f, line)) {
+        // Trim line.
+        base::trim_string(line, line);
+
+        // Remove empty lines
+        if (line.empty())
+          continue;
+
+        // Concatenate comments
+        if (line[0] == '#') {
+          line = line.substr(1);
+          base::trim_string(line, line);
+          comment += line;
+          comment.push_back('\n');
+          continue;
+        }
+
+        // Remove properties (TODO add these properties in the palette)
+        if (!std::isdigit(line[0])) {
+          std::vector<std::string> parts;
+          base::split_string(line, parts, ":");
+          // Aseprite extension for palettes with alpha channel.
+          if (parts.size() == 2 &&
+            parts[0] == "Channels") {
+            base::trim_string(parts[1], parts[1]);
+            if (parts[1] == "RGBA")
+              hasAlpha = true;
+          }
+          continue;
+        }
+
+        int r, g, b, a = 255;
+        std::string entryName;
+        std::istringstream lineIn(line);
+        lineIn >> r >> g >> b;
+        if (hasAlpha) {
+          lineIn >> a;
+        }
+        lineIn >> entryName;
+
+        if (lineIn.fail())
+          continue;
+
+        pal->addEntry(rgba(r, g, b, a));
+        if (!entryName.empty()) {
+          base::trim_string(entryName, entryName);
+          if (!entryName.empty())
+            pal->setEntryName(pal->size()-1, entryName);
+        }
       }
-      continue;
+
+      base::trim_string(comment, comment);
+      if (!comment.empty()) {
+        LOG(VERBOSE, "PAL: %s comment: %s\n", filename, comment.c_str());
+        pal->setComment(comment);
+      }
+
+      return pal.release();
     }
 
-    int r, g, b, a = 255;
-    std::string entryName;
-    std::istringstream lineIn(line);
-    lineIn >> r >> g >> b;
-    if (hasAlpha) {
-      lineIn >> a;
+    bool save_gpl_file(const Palette* pal, const char* filename)
+    {
+      std::ofstream f(FSTREAM_PATH(filename));
+      if (f.bad()) {
+        return false;
+      }
+
+      const bool hasAlpha = pal->hasAlpha();
+
+      f << "GIMP Palette\n";
+      if (hasAlpha) {
+        f << "Channels: RGBA\n";
+      }
+      f << "#\n";
+
+      const int palSize = pal->size();
+      const int palLast = palSize - 1;
+      for (int i = 0; i < palSize; ++i) {
+        const uint32_t col = pal->getEntry(i);
+        const uint8_t r = rgba_getr(col);
+        const uint8_t g = rgba_getg(col);
+        const uint8_t b = rgba_getb(col);
+
+        f << std::dec
+          << std::setfill(' ') << std::setw(3) << (int)r << " "
+          << std::setfill(' ') << std::setw(3) << (int)g << " "
+          << std::setfill(' ') << std::setw(3) << (int)b;
+
+        if (hasAlpha) {
+          const uint8_t a = rgba_geta(col);
+          f << " " << std::setfill(' ') << std::setw(3) << (int)a;
+        }
+
+        // If palette entry name is empty, then format
+        // colors as web-friendly hexadecimal, e.g. "AABBCC".
+        // For the time being, all entryNames would be empty,
+        // as this is not a fully implemented feature, see
+        // for example set_palette.cpp OnExecute.
+        const std::string entryName = pal->getEntryName(i);
+        if (entryName.empty()) {
+          f << " "
+            << std::hex << std::uppercase
+            << std::setfill('0') << std::setw(6)
+            << (r << 0x10 | g << 0x08 | b);
+        } else {
+          f << " " << entryName;
+        }
+
+        // Avoid terminal empty line.
+        if (i < palLast) {
+          f << "\n";
+        }
+      }
+
+      return true;
     }
-    lineIn >> entryName;
 
-    if (lineIn.fail())
-        continue;
-
-    pal->addEntry(rgba(r, g, b, a));
-    if (!entryName.empty()) {
-      base::trim_string(entryName, entryName);
-      if (!entryName.empty())
-        pal->setEntryName(pal->size()-1, entryName);
-    }
-  }
-
-  base::trim_string(comment, comment);
-  if (!comment.empty()) {
-    LOG(VERBOSE, "PAL: %s comment: %s\n", filename, comment.c_str());
-    pal->setComment(comment);
-  }
-
-  return pal.release();
-}
-
-bool save_gpl_file(const Palette* pal, const char* filename)
-{
-  std::ofstream f(FSTREAM_PATH(filename));
-  if (f.bad()) {
-    return false;
-  }
-  
-  const bool hasAlpha = pal->hasAlpha();
-  
-  f << "GIMP Palette\n";
-  if (hasAlpha) {
-    f << "Channels: RGBA\n";
-  }
-  f << "#\n";
-  
-  const int palSize = pal->size();
-  for (int i=0; i<palSize; ++i) {
-    const uint32_t col = pal->getEntry(i);
-    const uint8_t r = rgba_getr(col);
-    const uint8_t g = rgba_getg(col);
-    const uint8_t b = rgba_getb(col);
-    
-    f << std::dec
-      << std::setfill(' ') << std::setw(3) << (int)r << " "
-      << std::setfill(' ') << std::setw(3) << (int)g << " "
-      << std::setfill(' ') << std::setw(3) << (int)b;
-    
-    if (hasAlpha) {
-      const uint8_t a = rgba_geta(col);
-      f << " " << std::setfill(' ') << std::setw(3) << (int)a;
-    }
-    
-    // TODO add support for color name entries
-    // Until the above task is completed, a better
-    // placeholder than "Untitled" would be web hex.
-    const int webOrderHex = (r << 0x10) | (g << 0x08) | b;
-    f << " " << std::hex << std::uppercase
-      << std::setfill('0') << std::setw(6)
-      << webOrderHex << "\n";
-  }
-  
-  return true;
-}
-
-} // namespace file
+  } // namespace file
 } // namespace doc
