@@ -173,10 +173,24 @@ int Layer_get_isEditable(lua_State* L)
   return 1;
 }
 
+int Layer_get_isEditableHierarchy(lua_State* L)
+{
+  auto layer = get_docobj<Layer>(L, 1);
+  lua_pushboolean(L, layer->isEditableHierarchy());
+  return 1;
+}
+
 int Layer_get_isVisible(lua_State* L)
 {
   auto layer = get_docobj<Layer>(L, 1);
   lua_pushboolean(L, layer->isVisible());
+  return 1;
+}
+
+int Layer_get_isVisibleHierarchy(lua_State* L)
+{
+  auto layer = get_docobj<Layer>(L, 1);
+  lua_pushboolean(L, layer->isVisibleHierarchy());
   return 1;
 }
 
@@ -380,7 +394,9 @@ const Property Layer_properties[] = {
   { "isTransparent", Layer_get_isTransparent, nullptr },
   { "isBackground", Layer_get_isBackground, nullptr },
   { "isEditable", Layer_get_isEditable, Layer_set_isEditable },
+  { "isEditableHierarchy", Layer_get_isEditableHierarchy, nullptr },
   { "isVisible", Layer_get_isVisible, Layer_set_isVisible },
+  { "isVisibleHierarchy", Layer_get_isVisibleHierarchy, nullptr },
   { "isContinuous", Layer_get_isContinuous, Layer_set_isContinuous },
   { "isCollapsed", Layer_get_isCollapsed, Layer_set_isCollapsed },
   { "isExpanded", Layer_get_isExpanded, Layer_set_isExpanded },
