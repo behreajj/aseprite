@@ -511,12 +511,12 @@ void ColorSliders::onSetColor(const app::Color& color)
   setAbsSliderValue(Channel::Red,           color.getRed());
   setAbsSliderValue(Channel::Green,         color.getGreen());
   setAbsSliderValue(Channel::Blue,          color.getBlue());
-  setAbsSliderValue(Channel::HsvHue,        int(color.getHsvHue()));
-  setAbsSliderValue(Channel::HsvSaturation, int(color.getHsvSaturation() * 100.0));
-  setAbsSliderValue(Channel::HsvValue,      int(color.getHsvValue() * 100.0));
-  setAbsSliderValue(Channel::HslHue,        int(color.getHslHue()));
-  setAbsSliderValue(Channel::HslSaturation, int(color.getHslSaturation() * 100.0));
-  setAbsSliderValue(Channel::HslLightness,  int(color.getHslLightness() * 100.0));
+  setAbsSliderValue(Channel::HsvHue,        int(0.5 + color.getHsvHue()));
+  setAbsSliderValue(Channel::HsvSaturation, int(0.5 + color.getHsvSaturation() * 100.0));
+  setAbsSliderValue(Channel::HsvValue,      int(0.5 + color.getHsvValue() * 100.0));
+  setAbsSliderValue(Channel::HslHue,        int(0.5 + color.getHslHue()));
+  setAbsSliderValue(Channel::HslSaturation, int(0.5 + color.getHslSaturation() * 100.0));
+  setAbsSliderValue(Channel::HslLightness,  int(0.5 + color.getHslLightness() * 100.0));
   setAbsSliderValue(Channel::Gray,          color.getGray());
   setAbsSliderValue(Channel::Alpha,         color.getAlpha());
 }

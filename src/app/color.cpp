@@ -267,9 +267,9 @@ std::string Color::toHumanReadableString(PixelFormat pixelFormat, HumanReadableS
         }
         else {
           result << "HSV "
-                 << int(m_value.hsv.h) << "\xc2\xb0 "
-                 << base::clamp(int(m_value.hsv.s*100.0), 0, 100) << "% "
-                 << base::clamp(int(m_value.hsv.v*100.0), 0, 100) << "%";
+                 << int(0.5+m_value.hsv.h) << "\xc2\xb0 "
+                 << base::clamp(int(0.5+m_value.hsv.s*100.0), 0, 100) << "% "
+                 << base::clamp(int(0.5+m_value.hsv.v*100.0), 0, 100) << "%";
 
           if (pixelFormat == IMAGE_INDEXED)
             result << " Index " << color_utils::color_for_image(*this, IMAGE_INDEXED);
@@ -287,9 +287,9 @@ std::string Color::toHumanReadableString(PixelFormat pixelFormat, HumanReadableS
         }
         else {
           result << "HSL "
-                 << int(m_value.hsl.h) << "\xc2\xb0 "
-                 << base::clamp(int(m_value.hsl.s*100.0), 0, 100) << "% "
-                 << base::clamp(int(m_value.hsl.l*100.0), 0, 100) << "%";
+                 << int(0.5+m_value.hsl.h) << "\xc2\xb0 "
+                 << base::clamp(int(0.5+m_value.hsl.s*100.0), 0, 100) << "% "
+                 << base::clamp(int(0.5+m_value.hsl.l*100.0), 0, 100) << "%";
 
           if (pixelFormat == IMAGE_INDEXED)
             result << " Index " << color_utils::color_for_image(*this, IMAGE_INDEXED);
@@ -357,9 +357,9 @@ std::string Color::toHumanReadableString(PixelFormat pixelFormat, HumanReadableS
           result << "Gry-" << getGray();
         }
         else {
-          result << int(m_value.hsv.h) << "\xc2\xb0"
-                 << base::clamp(int(m_value.hsv.s*100.0), 0, 100) << ","
-                 << base::clamp(int(m_value.hsv.v*100.0), 0, 100);
+          result << int(0.5+m_value.hsv.h) << "\xc2\xb0"
+                 << base::clamp(int(0.5+m_value.hsv.s*100.0), 0, 100) << ","
+                 << base::clamp(int(0.5+m_value.hsv.v*100.0), 0, 100);
         }
         break;
 
@@ -368,9 +368,9 @@ std::string Color::toHumanReadableString(PixelFormat pixelFormat, HumanReadableS
           result << "Gry-" << getGray();
         }
         else {
-          result << int(m_value.hsl.h) << "\xc2\xb0"
-                 << base::clamp(int(m_value.hsl.s*100.0), 0, 100) << ","
-                 << base::clamp(int(m_value.hsl.l*100.0), 0, 100);
+          result << int(0.5+m_value.hsl.h) << "\xc2\xb0"
+                 << base::clamp(int(0.5+m_value.hsl.s*100.0), 0, 100) << ","
+                 << base::clamp(int(0.5+m_value.hsl.l*100.0), 0, 100);
         }
         break;
 
