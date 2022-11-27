@@ -344,8 +344,8 @@ void Brush::regenerate()
         else {
           double r = m_size * 0.5;
           double a = PI * m_angle / 180.0;
-          double cosa = cos(a);
-          double sina = sin(a);
+          double cosa = cos(-a);
+          double sina = sin(-a);
 
           // Define corners by signed radius around (0, 0) center.
           // Begin in top left corner, wind counter-clockwise.
@@ -354,29 +354,29 @@ void Brush::regenerate()
           double x11 = +r; double y11 = +r;
           double x10 = +r; double y10 = -r;
 
+          // Rotate corners, add AABB center.
+          double x00r = cosa * x00 - sina * y00;
+          double y00r = cosa * y00 + sina * x00;
+          double x01r = cosa * x01 - sina * y01;
+          double y01r = cosa * y01 + sina * x01;
+          double x11r = cosa * x11 - sina * y11;
+          double y11r = cosa * y11 + sina * x11;
+          double x10r = cosa * x10 - sina * y10;
+          double y10r = cosa * y10 + sina * x10;
+
           // After rotation, recenter the corners by
           // adding half the size of the AABB which
           // contains the rotated square.
-          double center = (abs(cosa) + abs(sina)) * r;
-
-          // Rotate corners, add AABB center.
-          double x00r = center + cosa * x00 - sina * y00;
-          double y00r = center + cosa * y00 + sina * x00;
-          double x01r = center + cosa * x01 - sina * y01;
-          double y01r = center + cosa * y01 + sina * x01;
-          double x11r = center + cosa * x11 - sina * y11;
-          double y11r = center + cosa * y11 + sina * x11;
-          double x10r = center + cosa * x10 - sina * y10;
-          double y10r = center + cosa * y10 + sina * x10;
+          int center = int(0.5 + (abs(cosa) + abs(sina)) * r);
 
           // Round points instead of truncating.
           // AABB center addition means they're assumed to
           // be positive, and so only 0.5 bias is added.
           int points[8] = { 
-              int(0.5 + x00r), int(0.5 + y00r),
-              int(0.5 + x01r), int(0.5 + y01r),
-              int(0.5 + x11r), int(0.5 + y11r),
-              int(0.5 + x10r), int(0.5 + y10r)
+              center + int(std::round(x00r)), center + int(std::round(y00r)),
+              center + int(std::round(x01r)), center + int(std::round(y01r)),
+              center + int(std::round(x11r)), center + int(std::round(y11r)),
+              center + int(std::round(x10r)), center + int(std::round(y10r))
           };
 
           doc::algorithm::polygon(4, points, m_image.get(), algo_hline);
