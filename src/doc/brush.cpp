@@ -342,19 +342,42 @@ void Brush::regenerate()
           clear_image(m_image.get(), BitmapTraits::max_value);
         }
         else {
-          double a = PI * m_angle / 180;
-          int c = size/2;
-          int r = m_size/2;
-          int d = m_size;
-          int x1 = int(c + r*cos(a-PI/2) + r*cos(a-PI));
-          int y1 = int(c - r*sin(a-PI/2) - r*sin(a-PI));
-          int x2 = int(x1 + d*cos(a));
-          int y2 = int(y1 - d*sin(a));
-          int x3 = int(x2 + d*cos(a+PI/2));
-          int y3 = int(y2 - d*sin(a+PI/2));
-          int x4 = int(x3 + d*cos(a+PI));
-          int y4 = int(y3 - d*sin(a+PI));
-          int points[8] = { x1, y1, x2, y2, x3, y3, x4, y4 };
+          double r = m_size * 0.5;
+          double a = PI * m_angle / 180.0;
+          double cosa = cos(a);
+          double sina = sin(a);
+
+          // Define corners by signed radius around (0, 0) center.
+          // Begin in top left corner, wind counter-clockwise.
+          double x00 = -r; double y00 = -r;
+          double x01 = -r; double y01 = +r;
+          double x11 = +r; double y11 = +r;
+          double x10 = +r; double y10 = -r;
+
+          // After rotation, recenter the corners by
+          // adding half the size of the AABB which
+          // contains the rotated square.
+          double center = (abs(cosa) + abs(sina)) * r;
+
+          // Rotate corners, add AABB center.
+          double x00r = center + cosa * x00 - sina * y00;
+          double y00r = center + cosa * y00 + sina * x00;
+          double x01r = center + cosa * x01 - sina * y01;
+          double y01r = center + cosa * y01 + sina * x01;
+          double x11r = center + cosa * x11 - sina * y11;
+          double y11r = center + cosa * y11 + sina * x11;
+          double x10r = center + cosa * x10 - sina * y10;
+          double y10r = center + cosa * y10 + sina * x10;
+
+          // Round points instead of truncating.
+          // AABB center addition means they're assumed to
+          // be positive, and so only 0.5 bias is added.
+          int points[8] = { 
+              int(0.5 + x00r), int(0.5 + y00r),
+              int(0.5 + x01r), int(0.5 + y01r),
+              int(0.5 + x11r), int(0.5 + y11r),
+              int(0.5 + x10r), int(0.5 + y10r)
+          };
 
           doc::algorithm::polygon(4, points, m_image.get(), algo_hline);
         }
